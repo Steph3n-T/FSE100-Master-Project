@@ -44,7 +44,7 @@ def extract_text(resp):
     except Exception:
         return str(resp)
 
-# sathwin's camera code ripped. utilized for image detection and we'll write our own code for the ai response.
+# sathwin's camera code ripped
 
 
 
