@@ -6,7 +6,7 @@ import base64
 import sys
 from openai import OpenAI
 
-LeftVibrator = 11 #gpio17
+LeftVibrator = 13 #gpio27
 RightVibrator = 12	#gpio18
 PushButton = 15 #gpio22
 LeftUltrasonicTrig = 31 #gpio6
@@ -14,7 +14,7 @@ LeftUltrasonicEcho = 29 #gpio5
 RightUltrasonicTrig = 38 #gpio20
 RightUltrasonicEcho = 40 #gpio21
 
-client = OpenAI(api_key="sk-REPLACE_WITH_NEW_KEY")
+client = OpenAI(api_key="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")
 
 MODEL = "gpt-5-nano-2025-08-07"
 IMAGE_PATH = "captured_image.jpg"
@@ -44,7 +44,7 @@ def extract_text(resp):
     except Exception:
         return str(resp)
 
-# sathwin's camera code ripped
+# sathwin's camera code ripped. utilized for image detection and we'll write our own code for the ai response.
 
 
 
@@ -122,17 +122,17 @@ def leftDistance():
 
       
 def rightDistance():
-    GPIO.output(LeftUltrasonicTrig, 0)
+    GPIO.output(RightUltrasonicTrig, 0)
     time.sleep(0.000002)
 
-    GPIO.output(LeftUltrasonicTrig, 1)
+    GPIO.output(RightUltrasonicTrig, 1)
     time.sleep(0.00001)
-    GPIO.output(LeftUltrasonicTrig, 0)
+    GPIO.output(RightUltrasonicTrig, 0)
 
-    while GPIO.input(LeftUltrasonicEcho) == 0:
+    while GPIO.input(RightUltrasonicEcho) == 0:
         a = 0
     time1 = time.time()
-    while GPIO.input(LeftUltrasonicEcho) == 1:
+    while GPIO.input(RightUltrasonicEcho) == 1:
         a = 1
     time2 = time.time()
 
