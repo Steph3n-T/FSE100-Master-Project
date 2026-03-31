@@ -127,31 +127,7 @@ def getDistance(trig_pin, echo_pin):
     time2 = time.time()  
 
     during = time2 - time1
-<<<<<<< Updated upstream
-    return during * 340 / 2 * 39.37 # recycled cm conversion code. 100 cm is 39.37 inches, the initial conversion (during * 340 / 2 * 100).
-
-      
-def rightDistance():
-    GPIO.output(RightUltrasonicTrig, 0)
-    time.sleep(0.000002)
-
-    GPIO.output(RightUltrasonicTrig, 1)
-    time.sleep(0.00001)
-    GPIO.output(RightUltrasonicTrig, 0)
-
-    while GPIO.input(RightUltrasonicEcho) == 0:
-        a = 0
-    time1 = time.time()
-    while GPIO.input(RightUltrasonicEcho) == 1:
-        a = 1
-    time2 = time.time()
-
-    during = time2 - time1
-    return during * 340 / 2 * 39.37 # recycled cm conversion code. 100 cm is 39.37 inches, the initial conversion (during * 340 / 2 * 100).
-      
-=======
     distance_inches = during * 340 / 2 * 39.37
->>>>>>> Stashed changes
       
 
 def loop():
