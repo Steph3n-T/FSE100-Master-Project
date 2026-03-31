@@ -102,22 +102,32 @@ def detect(chn):
         print("ERROR:", repr(e), file=sys.stderr)
         raise
 
-def leftDistance():
-    GPIO.output(LeftUltrasonicTrig, 0)
+def getDistance(trig_pin, echo_pin):
+    # ultrasonic distance calculation in inches
+    # if times out, return 999 to keep vibrator off
+    GPIO.output(trig_pin, 0)
     time.sleep(0.000002)
 
-    GPIO.output(LeftUltrasonicTrig, 1)
+    GPIO.output(trig_pin, 1)
     time.sleep(0.00001)
-    GPIO.output(LeftUltrasonicTrig, 0)
+    GPIO.output(trig_pin, 0)
 
-    while GPIO.input(LeftUltrasonicEcho) == 0:
-        a = 0
+    timeout = time.time() + 0.05
+    while GPIO.input(echo_pin) == 0:
+        if time.time() > timeout:
+            print(f"[WARN] Echo timeout (waiting High) on pin {echo_pin}")
+            return 999
     time1 = time.time()
-    while GPIO.input(LeftUltrasonicEcho) == 1:
-        a = 1
-    time2 = time.time()
+
+    timeout = time.time() + 0.05
+    while GPIO.input(echo_pin) == 1:
+        if time.time() > timeout:
+            print(f"[WARN] Echo timeout (waiting High) on pin {echo_pin}")
+            return 999
+    time2 = time.time()  
 
     during = time2 - time1
+<<<<<<< Updated upstream
     return during * 340 / 2 * 39.37 # recycled cm conversion code. 100 cm is 39.37 inches, the initial conversion (during * 340 / 2 * 100).
 
       
@@ -139,19 +149,24 @@ def rightDistance():
     during = time2 - time1
     return during * 340 / 2 * 39.37 # recycled cm conversion code. 100 cm is 39.37 inches, the initial conversion (during * 340 / 2 * 100).
       
+=======
+    distance_inches = during * 340 / 2 * 39.37
+>>>>>>> Stashed changes
       
 
 def loop():
     while True:
-        lDis = leftDistance()
-        rDis = rightDistance()
+        lDis = getDistance(LeftUltrasonicTrig, LeftUltrasonicEcho)
+        rDis = getDistance(RightUltrasonicTrig, RightUltrasonicEcho)
         if lDis < 18: # if left distance less than 18 inches, vibrate right vibrator
             GPIO.output(LeftVibrator, 1)
         if rDis < 18: # if right distance less than 18 inches, vibrate right vibrator
             GPIO.output(RightVibrator, 1)
 
 def destroy():
-	GPIO.cleanup() # Release resource
+    GPIO.output(LeftVibrator, GPIO.LOW)
+    GPIO.output(LeftVibrator, GPIO.LOW)
+    GPIO.cleanup() # Release resource
 
 if __name__ == "__main__":
         setup()
