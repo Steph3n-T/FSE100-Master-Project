@@ -4,7 +4,9 @@ import time
 import subprocess
 import base64
 import sys
+import speech_recognition as sr
 from openai import OpenAI
+
 
 LeftVibrator = 13 #gpio27
 RightVibrator = 12	#gpio18
@@ -13,6 +15,8 @@ LeftUltrasonicTrig = 31 #gpio6
 LeftUltrasonicEcho = 29 #gpio5
 RightUltrasonicTrig = 38 #gpio20
 RightUltrasonicEcho = 40 #gpio21
+
+MIC_DEADZONE = 2 # seconds to wait between microphone inputs
 
 DISTANCE_THRESHOLD = 18 # distance threshold in inches for vibrators
 
@@ -50,6 +54,69 @@ def extract_text(resp):
 
 # sathwin's camera code ripped. utilized for image detection and we'll write our own code for the ai response.
 
+r = sr.Recognizer()  # Create a recognizer object
+
+def listen(): # speech to text code ripped from canvas
+    try:
+        with sr.Microphone() as source:  
+            r.adjust_for_ambient_noise(source, duration=0.1)  # Adjust for background noise
+            audio = r.listen(source)  # Record audio
+            return r.recognize_google(audio)  # Convert speech to text using Google's API
+    except sr.RequestError:
+        print("Can't get results")  # Handle API request failure
+    except sr.UnknownValueError:
+        return ""  # Handle cases where speech isn't recognized
+
+def speechSearch(userInp):
+    """
+    Searches for the object specified by the user in the AI's response.
+    """
+    try:
+        # Capture image and get AI response
+        capture_image(IMAGE_PATH)
+        data_url = to_data_url(IMAGE_PATH)
+
+        prompt = (
+            "Reply with EXACTLY ONE short sentence (<= 15 words) "
+            "describing the main visible objects. Do not read text."
+            "The format should be 'there is a (insert color of object) (insert object name) in front of you'."
+            "If no object found, reply with 'no object detected'."
+        )
+
+        resp = client.responses.create(
+            model=MODEL,
+            reasoning={"effort": "low"},
+            max_output_tokens=1024,
+            input=[{
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {"type": "input_image", "image_url": data_url}
+                ]
+            }],
+        )
+
+        ai_response = extract_text(resp)
+        print(f"AI Response: {ai_response}")
+
+        # Check if the user's input matches the AI's detected object
+        if userInp.lower() in ai_response.lower():
+            print(f"Object '{userInp}' found!")
+            from gtts import gTTS
+            tts = gTTS(f"Yes, {userInp} is in front of you.", lang="en")
+            tts.save("response.mp3")
+            subprocess.run(["mpg123", "response.mp3"], check=True)
+        else:
+            print(f"Object '{userInp}' not found.")
+            from gtts import gTTS
+            tts = gTTS(f"No, {userInp} is not in front of you.", lang="en")
+            tts.save("response.mp3")
+            subprocess.run(["mpg123", "response.mp3"], check=True)
+
+    except Exception as e:
+        print("ERROR in speechSearch:", repr(e), file=sys.stderr)
+    
+
 
 
 def setup():
@@ -73,7 +140,9 @@ def detect(chn):
         prompt = (
             "Reply with EXACTLY ONE short sentence (<= 15 words) "
             "describing the main visible objects. Do not read text."
+            "Don't describe people or objects related to people (i.e. black man is in front of you, a yellow hand is in front of)"
             "The format should be 'there is a (insert color of object) (insert object name) in front of you'."
+            "For example, 'there is a orange shirt in front of you' or 'there is a black cell phone in front of you'"
             "If no object found, reply with 'no object detected'."
         )
 
@@ -153,7 +222,14 @@ def loop():
         else:
             GPIO.output(RightVibrator, 0)
 
-        time.sleep(0.1)  # Avoid reading too fast to reduce sensor noise
+        time.sleep(0.1)  # Avoid reading too fast to reduce sensor noise        
+
+        if time.time() - last_mic_time > MIC_DEADZONE:
+            print("Listening for user input...")
+            userSpeech = listen()
+            if userSpeech:  # If valid input is detected
+                speechSearch(userSpeech)
+                last_mic_time = time.time()
 
 def destroy():
     GPIO.output(LeftVibrator, GPIO.LOW)
