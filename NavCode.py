@@ -204,6 +204,8 @@ def getDistance(trig_pin, echo_pin):
       
 
 def loop():
+    global last_mic_time
+    
     while True:
         lDis = getDistance(LeftUltrasonicTrig, LeftUltrasonicEcho)
         rDis = getDistance(RightUltrasonicTrig, RightUltrasonicEcho)
