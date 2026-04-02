@@ -14,6 +14,10 @@ LeftUltrasonicEcho = 29 #gpio5
 RightUltrasonicTrig = 38 #gpio20
 RightUltrasonicEcho = 40 #gpio21
 
+DISTANCE_THRESHOLD = 18 # distance threshold in inches for vibrators
+
+
+
 client = OpenAI(api_key="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")
 
 MODEL = "gpt-5-nano-2025-08-07"
@@ -134,10 +138,22 @@ def loop():
     while True:
         lDis = getDistance(LeftUltrasonicTrig, LeftUltrasonicEcho)
         rDis = getDistance(RightUltrasonicTrig, RightUltrasonicEcho)
-        if lDis < 18: # if left distance less than 18 inches, vibrate right vibrator
+
+        print(f"Left: {lDis:.1f} in | Right: {rDis:.1f} in")
+
+        # Left vibrator: turn on if object detected, off otherwise
+        if lDis < DISTANCE_THRESHOLD:
             GPIO.output(LeftVibrator, 1)
-        if rDis < 18: # if right distance less than 18 inches, vibrate right vibrator
+        else:
+            GPIO.output(LeftVibrator, 0)
+
+        # Right vibrator: turn on if object detected, off otherwise
+        if rDis < DISTANCE_THRESHOLD:
             GPIO.output(RightVibrator, 1)
+        else:
+            GPIO.output(RightVibrator, 0)
+
+        time.sleep(0.1)  # Avoid reading too fast to reduce sensor noise
 
 def destroy():
     GPIO.output(LeftVibrator, GPIO.LOW)
