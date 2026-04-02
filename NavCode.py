@@ -201,6 +201,8 @@ def getDistance(trig_pin, echo_pin):
 
     during = time2 - time1
     distance_inches = during * 340 / 2 * 39.37
+
+    return distance_inches
       
 
 def loop():
@@ -235,7 +237,7 @@ def loop():
 
 def destroy():
     GPIO.output(LeftVibrator, GPIO.LOW)
-    GPIO.output(LeftVibrator, GPIO.LOW)
+    GPIO.output(RightVibrator, GPIO.LOW)
     GPIO.cleanup() # Release resource
 
 if __name__ == "__main__":
