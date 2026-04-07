@@ -58,10 +58,14 @@ r = sr.Recognizer()  # Create a recognizer object
 
 def listen(): # speech to text code ripped from canvas
     try:
-        with sr.Microphone() as source:  
-            r.adjust_for_ambient_noise(source, duration=0.1)  # Adjust for background noise
-            audio = r.listen(source)  # Record audio
-            return r.recognize_google(audio)  # Convert speech to text using Google's API
+        try:
+            with sr.Microphone() as source:  
+                r.adjust_for_ambient_noise(source, duration=0.1)  # Adjust for background noise
+                audio = r.listen(source)  # Record audio
+                return r.recognize_google(audio)  # Convert speech to text using Google's API
+        except OSError as e:
+            print(f"Microphone error: {e}")  # Handle microphone unavailability
+            return ""
     except sr.RequestError:
         print("Can't get results")  # Handle API request failure
     except sr.UnknownValueError:
